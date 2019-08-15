@@ -92,32 +92,24 @@ function actionPage() {
         search = document.querySelector('.search-wrapper_input'),
         searchBtn = document.querySelector('.search-btn');
 
-    discountCheckBox.addEventListener('click', () => {
-        cards.forEach((card) => {
-            if (discountCheckBox.checked) {
-                if (!card.querySelector('.card-sale')) {
-                    card.parentNode.style.display = 'none';
-                }
-            } else {
-                card.parentNode.style.display = '';
-            }
-        });
-    });
+    //Фильтр по цене и акции объединили
+    discountCheckBox.addEventListener('click', filter);
+    min.addEventListener('change', filter);
+    max.addEventListener('change', filter);
 
-    //Фильтр по цене 
-    min.addEventListener('change', folterPrice);
-    max.addEventListener('change', folterPrice);
-
-    function folterPrice(){
+    function filter(){
         cards.forEach((card) => {
             const cardPrice = card.querySelector('.card-price');
-            const price = parseFloat(cardPrice.textContent);
+            const price = parseFloat(cardPrice.textContent);  
+            const discount = card.querySelector('.card-sale');
 
             if ((min.value && price < min.value) || (max.value && price > max.value)) {
                 card.parentNode.style.display = 'none';
+            } else if (discountCheckBox.checked && !discount) {
+                card.parentNode.style.display = 'none';
             } else {
                 card.parentNode.style.display = '';
-            }
+            }  
         });
     }
 
