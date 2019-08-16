@@ -6,7 +6,7 @@ function toggleCheckBox() {
 
     checkBox.forEach((element) => {
         element.addEventListener('change', function() {
-            if (this.checked === true) { //окращенно if (this.checked)
+            if (this.checked) { 
                 this.nextElementSibling.classList.add('checked');
             } else {
                 this.nextElementSibling.classList.remove('checked');
@@ -93,9 +93,9 @@ function actionPage() {
         searchBtn = document.querySelector('.search-btn');
 
     //Фильтр по цене и акции объединили
-    discountCheckBox.addEventListener('click', filter);
-    min.addEventListener('change', filter);
-    max.addEventListener('change', filter);
+    discountCheckBox.addEventListener('click', filter, renderCatalog);
+    min.addEventListener('change', filter, renderCatalog);
+    max.addEventListener('change', filter, renderCatalog);
 
     function filter(){
         cards.forEach((card) => {
@@ -128,8 +128,95 @@ function actionPage() {
 }
 //End фильтер акции и фильтр и поиск
 
+//Получение данных с сервера
+function getData() {
+    const goodsWrapper = document.querySelector('.goods');
+    return fetch('../db/db.json')
+        .then((response) => {
+            if (response.ok){
+                return response.json();
+            } else {
+                throw new Error ('Данные не были полученые, ошибка:' + response.status);
+            }
+        })
+        .then(data => {
+            return data;
+        })
+        .catch(err => {
+            console.warn(err);
+            goodsWrapper.innerHTML = '<div style="color:red; font-size:30px">Упс что-то пошло не так!</div>';
+        });
+}
+ 
+//Выводим карточки товара
+function renderCards(data) {
+    const goodsWrapper = document.querySelector('.goods');
+    data.goods.forEach((good) => {
+        const card = document.createElement('div');
+        card.className = 'col-12 col-md-6 col-lg-4 col-xl-3';
+        card.innerHTML =`
+            <div class="card" data-category="${good.category}">
+            ${good.sale ? '<div class="card-sale">🔥Hot Sale🔥</div>' : ''}
+                <div class="card-img-wrapper">
+                    <span class="card-img-top"
+                        style="background-image: url('${good.img}')"></span>
+                </div>
+                <div class="card-body justify-content-between">
+                    <div class="card-price" style="${good.sale ? 'color:red' : ''}">${good.price} ₽</div>
+                    <h5 class="card-title">${good.title}</h5>
+                    <button class="btn btn-primary">В корзину</button>
+                </div>
+            </div>
+        `;
+        goodsWrapper.appendChild(card);
+    });
+}
+//End получение данных с сервера
 
-toggleCheckBox();
-toggleCart();
-addCart();
-actionPage();
+function renderCatalog() {
+    const cards = document.querySelectorAll('.goods .card');
+    const catalogList = document.querySelector('.catalog-list');
+    const catalogWrapper = document.querySelector('.catalog');
+    const catalogBtn = document.querySelector('.catalog-button');
+    const categories = new Set();
+    
+    cards.forEach((card) => {
+        console.dir(card);
+        categories.add(card.dataset.category);
+    });
+
+    categories.forEach((item) => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        catalogList.appendChild(li);
+    });
+
+    catalogBtn.addEventListener('click', (event) => {
+        if (catalogWrapper.style.display) {
+            catalogWrapper.style.display = ''; 
+        } else {
+            catalogWrapper.style.display = 'block';
+        }
+
+        if (event.target.tagName === 'LI'){
+            cards.forEach((card) => {
+                if(card.dataset.category === event.target.textContent) {
+                    card.parentNode.style.display = '';
+                } else {
+                    card.parentNode.style.display = 'none';
+                }
+            });
+        }
+    });
+}
+
+
+
+getData().then((data) => {
+    renderCards(data);
+    toggleCheckBox();
+    toggleCart();
+    addCart();
+    actionPage();
+    renderCatalog();
+});
